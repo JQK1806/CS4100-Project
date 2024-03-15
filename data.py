@@ -27,12 +27,12 @@ for day in range(n_days):
     
     total_day_usage = day_df.drop(columns=['Day', 'Hour']).sum().to_dict()
     total_day_usage['Day'] = day + 1
-    total_day_usage['Hour'] = 'Total'
+    total_day_usage['Hour'] = 'Total usage (kWh) for day',[day + 1]
     data.extend(day_data)
     data.append(total_day_usage)
 
 df = pd.DataFrame(data)
 
 
-print(df.head(30))
+print(df.head(50))
 
