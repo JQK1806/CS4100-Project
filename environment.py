@@ -18,14 +18,13 @@ class SmartHomeEnv(gym.Env):
 
     def step(self, actions, outside_temp, energy_cost, current_temps, target_temps):
         # ppl move around, current temp of each zone should be updated
-        updated_temps = current_temps
         action_temp_penalty = {0:0, 1:-2, 2: -5, 3:-10}
         rewards = []
         for i, action in enumerate(actions):
             current_temps[i] = action_temp_penalty[action] + 0.5 * (outside_temp - current_temps[i])
             rewards[i] = -1 * action * energy_cost + 10 * (current_temps[i] - target_temps[i])
         
-        
+
         self.state = np.random.randint(2, size=self.num_zones)
 
         return current_temps, rewards, self.state
