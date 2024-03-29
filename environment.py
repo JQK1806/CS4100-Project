@@ -13,10 +13,12 @@ class SmartHomeEnv(gym.env):
         self.state = self.reset()
     def reset(self):
         self.state = np.zeros(self.num_zones, dtype=int)  # Reset all zones to unoccupied - 0
-        return self.encode_state()
 
-    def step(self, action):
+    def step(self, actions, outside_temp, energy_cost, current_temps):
         # ppl move around, current temp of each zone should be updated
-        pass
+        updated_temps = current_temps
+        reward = 0
+
+        self.state = np.random.randint(2, size=self.num_zones)
 
 
