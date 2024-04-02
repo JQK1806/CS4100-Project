@@ -20,8 +20,9 @@ class CombinedNetwork(nn.Module):
     def forward(self, inputs):
         outputs=[]
         for i in range(9):
+            # used chat gpt
             output_i = self.zones[i](inputs[:, i, :])  # pass ith zone's input to its mini network
-            output_i = F.softmax(output_i, dim=-1)  #  softmax to get probabilities of each action
+            output_i = F.softmax(output_i, dim=-1)  #  softmax to get probabilities of each action 
             max_action_i = torch.argmax(output_i, dim=-1)  # Choose the action with the highest probability
             outputs.append(max_action_i)
         return torch.stack(outputs, dim=1)  # stack outputs of all mini networks along dimension 1 - output is (9,2)
