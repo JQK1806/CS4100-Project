@@ -25,4 +25,4 @@ class CombinedNetwork(nn.Module):
             output_i = F.softmax(output_i, dim=-1)  #  softmax to get probabilities of each action 
             max_action_i = torch.argmax(output_i, dim=-1)  # Choose the action with the highest probability
             outputs.append(max_action_i)
-        return torch.stack(outputs, dim=1)  # stack outputs of all mini networks along dimension 1 - output is (9,2)
+        return torch.stack(outputs, dim=1)  # stack outputs of all mini networks along dim 1
