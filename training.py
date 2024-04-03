@@ -71,14 +71,14 @@ def q_learning():
             temp_differences_tensor = torch.tensor(temp_differences, dtype=torch.float32).reshape(1, -1)  # Reshape temp_differences to a row vector
             concatenated_input = torch.cat((next_state_tensor, temp_differences_tensor), dim=0)  # Concatenate along the columns (second dimension)
             print("CONCATENATED INPUT", concatenated_input)
-            next_q_values = net(concatenated_input)
+            _, next_q_values = net(concatenated_input)
             max_next_q_value = next_q_values.max().item()
             
             # Calculate target Q-value
             target_q_value = reward + discount * max_next_q_value if not hour==23 else reward
             
             # Get Q-value for the current state and action
-            current_q_value = net(torch.tensor(input, dtype=torch.float32))[actions]
+            _, current_q_value = net(torch.tensor(concatenated_input))[actions]
             
             # Calculate loss
             loss = criterion(current_q_value, torch.tensor(target_q_value, dtype=torch.float32))
