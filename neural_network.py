@@ -9,6 +9,7 @@ class MiniZoneNetwork(nn.Module):
         self.fc2 = nn.Linear(3,4) # 3 hidden units, 4 outputs (0,1,2,3)
 
     def forward(self, x):
+        print("x", x)
         x = torch.relu(self.fc1(x))
         x = self.fc2(x)
         return x
@@ -22,8 +23,12 @@ class CombinedNetwork(nn.Module):
         for i in range(9):
             # used chat gpt
             print("self zones", self.zones)
-            output_i = self.zones[i](inputs[i, :])  # pass ith zone's input to its mini network
+            print("inputs", inputs)
+            print("mini zone input i", inputs[:,i])
+            output_i = self.zones[i](inputs[:, i])  # pass ith zone's input to its mini network
             output_i = F.softmax(output_i, dim=-1)  #  softmax to get probabilities of each action 
             max_action_i = torch.argmax(output_i, dim=-1)  # Choose the action with the highest probability
+            print("max action i", max_action_i)
             outputs.append(max_action_i)
-        return torch.stack(outputs, dim=1)  # stack outputs of all mini networks along dim 1
+        print("outputs", outputs)
+        return torch.stack(outputs, dim=0)  # stack outputs of all mini networks along dim 1

@@ -68,7 +68,7 @@ def q_learning():
 
             next_state_tensor = torch.tensor(next_state, dtype=torch.float32).reshape(1, -1)  # Reshape next_state to a row vector
             temp_differences_tensor = torch.tensor(temp_differences, dtype=torch.float32).reshape(1, -1)  # Reshape temp_differences to a row vector
-            concatenated_input = torch.cat((next_state_tensor, temp_differences_tensor), dim=1)  # Concatenate along the columns (second dimension)
+            concatenated_input = torch.cat((next_state_tensor, temp_differences_tensor), dim=0)  # Concatenate along the columns (second dimension)
             print("CONCATENATED INPUT", concatenated_input)
             next_q_values = net(concatenated_input)
             max_next_q_value = next_q_values.max().item()
