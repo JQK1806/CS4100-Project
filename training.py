@@ -39,6 +39,16 @@ for episode in range(num_episodes):
             episode_reward += sum(rewards)
             rewards_tensor = torch.tensor(rewards, dtype=torch.float32)
 
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+            total_loss += loss.item()
+            state = next_state
+    
+            if done:
+                break
+
 
 
 
