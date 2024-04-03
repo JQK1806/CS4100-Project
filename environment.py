@@ -26,9 +26,10 @@ class SmartHomeEnv(gym.Env):
             #     current_temps[i] = action_temp_penalty[action] + 0.5 * (outside_temp - current_temps[i])
             current_temps[i] = action_temp_penalty[action] + 0.5 * (outside_temp - current_temps[i])
             temp_diff = current_temps[i] - target_temps[i]
-            action_reward = -1 * action * energy_cost
+            action_reward = action * energy_cost
             temp_reward = 10 * (10 - abs(temp_diff)) # take into account occupancy
             rewards[i] = action_reward + temp_reward
+
 
 
         self.state = np.random.randint(2, size=self.num_zones)
