@@ -23,9 +23,9 @@ class SmartHomeEnv(gym.Env):
         reward = 0
         for i, action in enumerate(actions):
             if target_temps[i] > current_temps[i]:
-                 current_temps[i] = -action_temp_penalty[action]
+                 current_temps[i] = current_temps[i]-action_temp_penalty[action]
             else:
-                current_temps[i] = action_temp_penalty[action]
+                current_temps[i] = current_temps[i]+action_temp_penalty[action]
             if current_temps[i] < outside_temp:
                 current_temps[i] = current_temps[i] + 0.5 * (outside_temp - current_temps[i])
             else:
