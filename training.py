@@ -62,8 +62,12 @@ def q_learning():
             # get rewards
             # and new state
             next_state, next_curr_temps, reward = env.step(actions, outside_temp, energy_cost, current_temps, target_temps)
+            print("Reward", reward)
             current_temps = next_curr_temps
+            print("Next curr temps", current_temps)
+            print("target temps", target_temps)
             temp_differences = target_temps - current_temps
+            print("Temp diffs", temp_differences)
             episode_reward += reward
 
 
@@ -76,17 +80,23 @@ def q_learning():
             
             # Calculate target Q-value
             target_q_value = reward + discount * max_next_q_value if not hour==23 else reward
-            
+            print("ACTIONS", actions)
+
             # Get Q-value for the current state and action
-            _, current_q_value = net(torch.tensor(concatenated_input))[actions]
-            
+            # Get the Q-values and actions from the output tuple of the neural network
+            _, q_values = net(torch.tensor(concatenated_input))
+
+            actions_tensor = torch.tensor(actions, dtype=torch.long)
+
+            # Get Q-value for the current state and action
+            current_q_value = torch.gather(q_values, 1, actions_tensor.unsqueeze(1))
             # Calculate loss
             loss = criterion(current_q_value, torch.tensor(target_q_value, dtype=torch.float32))
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
 
-            total_loss += criterion.item()
+            total_loss += loss.item()
             state = next_state
             epsilon = epsilon * 0.9
 
