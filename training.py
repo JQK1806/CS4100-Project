@@ -23,36 +23,32 @@ PART 5:
 Train your model!
 '''
 
+
 max_steps_per_ep = 24
 num_episodes = 100
-
-for episode in range(num_episodes):
-    total_loss = 0.0
-    total_reward = 0.0
-    state = env.reset()
+def q_learning():
     for episode in range(num_episodes):
+        total_loss = 0.0
         state = env.reset()
         episode_reward = 0.0
+        temp_diffs = np.zeros(9)
+        outside_temp = 70
         for hour in range (max_steps_per_ep):
+            # add temp diff to input param
             actions = net(torch.tensor(state,dtype=torch.float32))
             next_state, rewards, done = env.step(actions)
             episode_reward += sum(rewards)
             rewards_tensor = torch.tensor(rewards, dtype=torch.float32)
 
             optimizer.zero_grad()
-            loss.backward()
+            criterion.backward()
             optimizer.step()
 
-            total_loss += loss.item()
+            total_loss += criterion.item()
             state = next_state
-    
-            if done:
-                break
 
+        print(f"Training loss: {total_loss}")
 
+    print('Finished Training')
 
-
-    print(f"Training loss: {running_loss}")
-
-print('Finished Training')
 
