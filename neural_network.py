@@ -21,7 +21,8 @@ class CombinedNetwork(nn.Module):
         outputs=[]
         for i in range(9):
             # used chat gpt
-            output_i = self.zones[i](inputs[:, i, :])  # pass ith zone's input to its mini network
+            print("self zones", self.zones)
+            output_i = self.zones[i](inputs[i, :])  # pass ith zone's input to its mini network
             output_i = F.softmax(output_i, dim=-1)  #  softmax to get probabilities of each action 
             max_action_i = torch.argmax(output_i, dim=-1)  # Choose the action with the highest probability
             outputs.append(max_action_i)

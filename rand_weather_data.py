@@ -21,21 +21,11 @@ def generate_outside_temperatures(temp_range=(70, 100), seed=1):
         else:
             temp -= random.randint(1, 3)
         
-        hourly_temperatures.append((hour, temp))
+        hourly_temperatures.append(temp)
     
     return hourly_temperatures
 
 
 time_based_temperatures = generate_outside_temperatures()
-for hour, temp in time_based_temperatures:
-    print(f"{hour:02d}:00 - {temp}°F")
 
 
-def get_temperature_by_hour(hour, temperatures):
-    for hour_temp in temperatures:
-        if hour_temp[0] == hour:
-            return hour_temp[1]
-    return 'Invalid hour'
-
-
-print(get_temperature_by_hour(23, time_based_temperatures))
