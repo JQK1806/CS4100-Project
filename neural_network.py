@@ -19,16 +19,19 @@ class CombinedNetwork(nn.Module):
         super(CombinedNetwork, self).__init__()
         self.zones = nn.ModuleList([MiniZoneNetwork() for _ in range(9)])
     def forward(self, inputs):
-        outputs=[]
+        actions=[]
+        q_values = []
         for i in range(9):
             # used chat gpt
             print("self zones", self.zones)
             print("inputs", inputs)
             print("mini zone input i", inputs[:,i])
             output_i = self.zones[i](inputs[:, i])  # pass ith zone's input to its mini network
+            q_values.append(output_i)
             output_i = F.softmax(output_i, dim=-1)  #  softmax to get probabilities of each action 
             max_action_i = torch.argmax(output_i, dim=-1)  # Choose the action with the highest probability
             print("max action i", max_action_i)
-            outputs.append(max_action_i)
-        print("outputs", outputs)
-        return torch.stack(outputs, dim=0)  # stack outputs of all mini networks along dim 1
+            actions.append(max_action_i)
+        print("outputs", torch.stack(actions, dim=0))
+        print("q values", torch.stack(q_values, dim=0))
+        return torch.stack(actions, dim=0), torch.stack(q_values, dim=0) # stack outputs of all mini networks along dim 1

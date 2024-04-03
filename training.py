@@ -50,9 +50,10 @@ def q_learning():
             if np.random.random() < epsilon: #epsilon greedy
                 actions = np.random.randint(4, size=9)
             else:
-                inputs = np.concatenate((state, temp_differences))
-                print("INPUT", inputs)
-                actions = net(torch.tensor(inputs, dtype=torch.float32))
+                state_tensor = torch.tensor(state, dtype=torch.float32).reshape(1, -1)  # Reshape next_state to a row vector
+                temp_differences_tensor = torch.tensor(temp_differences, dtype=torch.float32).reshape(1, -1)  # Reshape temp_differences to a row vector
+                concatenated_input = torch.cat((state_tensor, temp_differences_tensor), dim=0)  # Concatenate along the columns (second dimension)
+                actions = net(concatenated_input)
             # add temp diff to input param
             # get differences
             # pass as input to the neural network with the occupancies
@@ -72,16 +73,12 @@ def q_learning():
             print("CONCATENATED INPUT", concatenated_input)
             next_q_values = net(concatenated_input)
             max_next_q_value = next_q_values.max().item()
-
-            # Update Q-value using Q-learning equation
-            next_q_values = net(torch.tensor(np.concatenate((next_state, temp_differences)), dtype=torch.float32))
-            max_next_q_value = next_q_values.max().item()
             
             # Calculate target Q-value
             target_q_value = reward + discount * max_next_q_value if not hour==23 else reward
             
             # Get Q-value for the current state and action
-            current_q_value = net(torch.tensor(inputs, dtype=torch.float32))[actions]
+            current_q_value = net(torch.tensor(input, dtype=torch.float32))[actions]
             
             # Calculate loss
             loss = criterion(current_q_value, torch.tensor(target_q_value, dtype=torch.float32))
