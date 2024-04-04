@@ -25,14 +25,24 @@ PART 5:
 Train your model!
 '''
 
+def update_policy(rewards, log_probs, optimizer):
+    log_probs = torch.stack(log_probs)
+    loss = 0
+    for log_prob, reward in zip(log_probs, rewards):
+        loss += -torch.sum(log_prob) * reward  # Use the reward for each step
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+    return loss.item()
 
 max_steps_per_ep = 24
-num_episodes = 100
-
+num_episodes = 1000
 energy_cost = 2.0
 def q_learning():
     total_loss = 0.0
     epsilon = .9
+    all_rewards = []
+    all_losses = []
     for episode in range(num_episodes):
         state = env.reset()
         episode_reward = 0.0
@@ -41,19 +51,25 @@ def q_learning():
         outside_temps = generate_outside_temperatures()
         outside_temp = outside_temps[0]
         current_temps = np.full(9, outside_temp)
+
+        log_probs = []
+        rewards = []
+
         # set all current temps to be the ouside temp
         for hour in range (max_steps_per_ep):
             outside_temp = outside_temps[hour]
             temp_differences = target_temps - current_temps
-            print("State", state)
-            print("Temp diffs", temp_differences)
             if np.random.random() < epsilon: #epsilon greedy
-                actions = np.random.randint(4, size=9)
+                actions = torch.randint(0, 4, (9,), dtype=torch.long)  # Generate random actions for 9 zones
+                prob_action = torch.full((9,), 0.25)  # Each action has a probability of 0.25
+                log_prob = torch.log(prob_action)  # Log probability of each action
+
             else:
                 state_tensor = torch.tensor(state, dtype=torch.float32).reshape(1, -1)  # Reshape next_state to a row vector
                 temp_differences_tensor = torch.tensor(temp_differences, dtype=torch.float32).reshape(1, -1)  # Reshape temp_differences to a row vector
                 concatenated_input = torch.cat((state_tensor, temp_differences_tensor), dim=0)  # Concatenate along the columns (second dimension)
-                actions = net(concatenated_input)
+                actions, probabilities = net(concatenated_input)
+                log_prob = torch.log(probabilities)  # Log probability of the action taken
             # add temp diff to input param
             # get differences
             # pass as input to the neural network with the occupancies
@@ -62,47 +78,27 @@ def q_learning():
             # get rewards
             # and new state
             next_state, next_curr_temps, reward = env.step(actions, outside_temp, energy_cost, current_temps, target_temps)
-            print("Reward", reward)
-            current_temps = next_curr_temps
-            print("Next curr temps", current_temps)
-            print("target temps", target_temps)
-            temp_differences = target_temps - current_temps
-            print("Temp diffs", temp_differences)
-            episode_reward += reward
-
-
-            next_state_tensor = torch.tensor(next_state, dtype=torch.float32).reshape(1, -1)  # Reshape next_state to a row vector
-            temp_differences_tensor = torch.tensor(temp_differences, dtype=torch.float32).reshape(1, -1)  # Reshape temp_differences to a row vector
-            concatenated_input = torch.cat((next_state_tensor, temp_differences_tensor), dim=0)  # Concatenate along the columns (second dimension)
-            print("CONCATENATED INPUT", concatenated_input)
-            _, next_q_values = net(concatenated_input)
-            max_next_q_value = next_q_values.max().item()
             
-            # Calculate target Q-value
-            target_q_value = reward + discount * max_next_q_value if not hour==23 else reward
-            print("ACTIONS", actions)
+            current_temps = next_curr_temps
+            temp_differences = target_temps - current_temps
+            episode_reward += reward
+            rewards.append(reward)
+            log_probs.append(log_prob)
 
-            # Get Q-value for the current state and action
-            # Get the Q-values and actions from the output tuple of the neural network
-            _, q_values = net(torch.tensor(concatenated_input))
-
-            actions_tensor = torch.tensor(actions, dtype=torch.long)
-
-            # Get Q-value for the current state and action
-            current_q_value = torch.gather(q_values, 1, actions_tensor.unsqueeze(1))
-            # Calculate loss
-            loss = criterion(current_q_value, torch.tensor(target_q_value, dtype=torch.float32))
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-
-            total_loss += loss.item()
             state = next_state
             epsilon = epsilon * 0.9
+        
+        print(f"Episode reward: {episode_reward}")
+        print("log probs", log_probs)
+        print("Rewards", rewards)
 
+        total_loss += update_policy(rewards, log_probs, optimizer)
         print(f"Training loss: {total_loss}")
-
+        all_rewards.append(episode_reward)
+        all_losses.append(total_loss)
     print('Finished Training')
+    print("All rewards", all_rewards)
+    print("All losses", all_losses)
 
 
 q_learning()

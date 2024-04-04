@@ -18,6 +18,7 @@ class SmartHomeEnv(gym.Env):
         return self.state
 
     def step(self, actions, outside_temp, energy_cost, current_temps, target_temps):
+        actions = actions.numpy()
         # ppl move around, current temp of each zone should be updated
         action_temp_penalty = {0:0, 1:-2, 2: -5, 3:-10}
         reward = 0
