@@ -23,14 +23,19 @@ class SmartHomeEnv(gym.Env):
         action_temp_penalty = {0:0, 1:-2, 2: -5, 3:-10}
         reward = 0
         for i, action in enumerate(actions):
+            print(f"Zone: {i}, Action: {action}")
+            print(f"Current Temp: {current_temps[i]}")
+            print(f"Target Temp: {target_temps[i]}")
+            print(f"Outside Temp: {outside_temp}")
             if target_temps[i] > current_temps[i]:
                  current_temps[i] = current_temps[i]-action_temp_penalty[action]
             else:
                 current_temps[i] = current_temps[i]+action_temp_penalty[action]
             if current_temps[i] < outside_temp:
-                current_temps[i] = current_temps[i] + 0.5 * (outside_temp - current_temps[i])
+                current_temps[i] = current_temps[i] + 0.1 * (outside_temp - current_temps[i])
             else:
-                current_temps[i] = current_temps[i] - 0.5 * (current_temps[i] - outside_temp)
+                current_temps[i] = current_temps[i] - 0.1 * (current_temps[i] - outside_temp)
+            print(f"New Temp: {current_temps[i]}")
             temp_diff = current_temps[i] - target_temps[i]
             action_reward = -1 * action * energy_cost
             temp_reward = 10 * (10 - abs(temp_diff) + self.state[i]) # take into account occupancy

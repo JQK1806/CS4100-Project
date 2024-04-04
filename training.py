@@ -38,7 +38,7 @@ def concatenate_inputs(state, temp_differences):
     return concatenated_input
 
 max_steps_per_ep = 24
-num_episodes = 1000
+num_episodes = 2
 energy_cost = 2.0
 def q_learning():
     epsilon = .9
@@ -76,6 +76,12 @@ def q_learning():
             # pass actions to environment
             # get rewards
             # and new state
+            print(f"Hour: {hour}")
+            print(f"State: {state}")
+            print(f"Current temps: {current_temps}")
+            print(f"Target temps: {target_temps}")
+            print(f"Outside temp: {outside_temp}")
+            print(f"Actions: {actions}")
             next_state, next_curr_temps, reward = env.step(actions, outside_temp, energy_cost, current_temps, target_temps)
             rewards.append(reward)
             log_probs.append(log_prob)
@@ -87,6 +93,10 @@ def q_learning():
             temp_differences = target_temps - current_temps
             episode_reward += reward
             state = next_state
+            print(f"Next state: {state}")
+            print(f"Updated current temps after action: {current_temps}")
+            print(f"Reward: {reward}")
+
         
         print(f"Episode reward: {episode_reward}")
         print(f"Training loss: {ep_loss.item()}")
