@@ -5,6 +5,7 @@ import numpy as np
 from environment import SmartHomeEnv
 from neural_network import CombinedNetwork
 from rand_weather_data import generate_outside_temperatures
+import matplotlib.pyplot as plt
 
 # Create an instance of the environment
 env = SmartHomeEnv()
@@ -38,7 +39,7 @@ def concatenate_inputs(state, temp_differences):
     return concatenated_input
 
 max_steps_per_ep = 24
-num_episodes = 1000
+num_episodes = 100
 energy_cost = 2.0
 def q_learning():
     epsilon = .9
@@ -98,9 +99,27 @@ def q_learning():
 
         all_rewards.append(episode_reward)
         all_losses.append(ep_loss.item())
+
+        # Plot the training loss after every episode
+        plt.plot(all_losses, label='Training Loss')
+        plt.xlabel('Episode')
+        plt.ylabel('Loss')
+        plt.title('Training Loss Over Episodes')
+        plt.legend()
+        plt.show()
+
+        # Plot the rewards after every episode
+        plt.plot(all_rewards, label='Training Loss')
+        plt.xlabel('Episode')
+        plt.ylabel('Reward')
+        plt.title('Rewards Over Episodes')
+        plt.legend()
+        plt.show()
     print('Finished Training')
     print("All rewards", all_rewards)
     print("All losses", all_losses)
 
 
+
 q_learning()
+
