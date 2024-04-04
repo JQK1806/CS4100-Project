@@ -35,6 +35,12 @@ def update_policy(rewards, log_probs, optimizer):
     optimizer.step()
     return loss.item()
 
+def concatenate_inputs(state, temp_differences):
+    state_tensor = torch.tensor(state, dtype=torch.float32).reshape(1, -1)  # Reshape next_state to a row vector
+    temp_differences_tensor = torch.tensor(temp_differences, dtype=torch.float32).reshape(1, -1)  # Reshape temp_differences to a row vector
+    concatenated_input = torch.cat((state_tensor, temp_differences_tensor), dim=0)  # Concatenate along the columns (second dimension)
+    return concatenated_input
+
 max_steps_per_ep = 24
 num_episodes = 1000
 energy_cost = 2.0
@@ -59,6 +65,9 @@ def q_learning():
         for hour in range (max_steps_per_ep):
             outside_temp = outside_temps[hour]
             temp_differences = target_temps - current_temps
+            print("State", state)
+            print("Temp diffs", temp_differences)
+            curr_concatenated_input = concatenate_inputs(state, temp_differences)  # Concatenate along the columns (second dimension)
             if np.random.random() < epsilon: #epsilon greedy
                 actions = torch.randint(0, 4, (9,), dtype=torch.long)  # Generate random actions for 9 zones
                 prob_action = torch.full((9,), 0.25)  # Each action has a probability of 0.25
@@ -84,8 +93,12 @@ def q_learning():
             episode_reward += reward
             rewards.append(reward)
             log_probs.append(log_prob)
-
+            next_temp_differences = target_temps - current_temps
             state = next_state
+            current_temps = next_curr_temps
+            temp_differences = next_temp_differences
+            episode_reward += reward
+
             epsilon = epsilon * 0.9
         
         print(f"Episode reward: {episode_reward}")
