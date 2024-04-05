@@ -26,9 +26,9 @@ Train your model!
 '''
 
 
-def calculate_loss(reward, log_prob):
+def calculate_loss(reward, log_probs):
     loss = 0
-    for log_prob in log_prob:
+    for log_prob in log_probs:
         loss += log_prob * reward  # Use the reward for each step
     return loss
 
@@ -38,8 +38,8 @@ def concatenate_inputs(state, temp_differences):
     concatenated_input = torch.cat((state_tensor, temp_differences_tensor), dim=0)  # Concatenate along the columns (second dimension)
     return concatenated_input
 
-max_steps_per_ep = 300
-num_episodes = 600
+max_steps_per_ep = 24
+num_episodes = 100
 energy_cost = 5.0
 def q_learning():
     epsilon = .99
@@ -55,8 +55,6 @@ def q_learning():
         outside_temp = outside_temps[0]
         current_temps = np.full(9, outside_temp)
 
-        log_probs = []
-
         # set all current temps to be the ouside temp
         for hour in range (max_steps_per_ep):
             if hour >= 24: 
@@ -67,10 +65,10 @@ def q_learning():
             if np.random.random() < epsilon: #epsilon greedy
                 actions = torch.randint(0, 4, (9,), dtype=torch.long)  # Generate random actions for 9 zones
                 prob_action = torch.full((9,), 0.25)  # Each action has a probability of 0.25
-                log_prob = torch.log(prob_action)  # Log probability of each action
+                log_probs = torch.log(prob_action)  # Log probability of each action
             else:
                 actions, probabilities = net(curr_concatenated_input)
-                log_prob = torch.log(probabilities)  # Log probability of the action taken
+                log_probs = torch.log(probabilities)  # Log probability of the action taken
             # add temp diff to input param
             # get differences
             # pass as input to the neural network with the occupancies
@@ -85,10 +83,9 @@ def q_learning():
             print(f"Outside temp: {outside_temp}")
             print(f"Actions: {actions}")
             next_state, next_curr_temps, reward = env.step(actions, outside_temp, energy_cost, current_temps, target_temps)
-            log_probs.append(log_prob)
 
             epsilon = epsilon * 0.99
-            ep_loss += calculate_loss(reward, log_prob)
+            ep_loss += calculate_loss(reward, log_probs)
 
             current_temps = next_curr_temps
             temp_differences = target_temps - current_temps
@@ -97,7 +94,7 @@ def q_learning():
             print(f"Next state: {state}")
             print(f"Updated current temps after action: {current_temps}")
             print(f"Reward: {reward}")
-            print(f"Step loss: {calculate_loss(reward, log_prob)}")
+            print(f"Step loss: {calculate_loss(reward, log_probs)}")
 
         
         print(f"Episode reward: {episode_reward}")
