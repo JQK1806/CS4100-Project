@@ -18,7 +18,7 @@ Choose a good loss function and optimizer
 '''
 
 criterion = nn.MSELoss() 
-optimizer = torch.optim.Adam(net.parameters(), lr=0.001)
+optimizer = torch.optim.Adam(net.parameters(), lr=0.01)
 
 '''
 PART 5:
@@ -29,7 +29,7 @@ Train your model!
 def calculate_loss(reward, log_prob):
     loss = 0
     for log_prob in log_prob:
-        loss += -torch.sum(log_prob) * reward  # Use the reward for each step
+        loss += log_prob * reward  # Use the reward for each step
     return loss
 
 def concatenate_inputs(state, temp_differences):
@@ -38,11 +38,11 @@ def concatenate_inputs(state, temp_differences):
     concatenated_input = torch.cat((state_tensor, temp_differences_tensor), dim=0)  # Concatenate along the columns (second dimension)
     return concatenated_input
 
-max_steps_per_ep = 24
-num_episodes = 100
-energy_cost = 2.0
+max_steps_per_ep = 300
+num_episodes = 600
+energy_cost = 5.0
 def q_learning():
-    epsilon = .9
+    epsilon = .99
     all_rewards = []
     all_losses = []
     for episode in range(num_episodes):
@@ -56,10 +56,11 @@ def q_learning():
         current_temps = np.full(9, outside_temp)
 
         log_probs = []
-        rewards = []
 
         # set all current temps to be the ouside temp
         for hour in range (max_steps_per_ep):
+            if hour >= 24: 
+                hour = hour % 24 
             outside_temp = outside_temps[hour]
             temp_differences = target_temps - current_temps
             curr_concatenated_input = concatenate_inputs(state, temp_differences)  # Concatenate along the columns (second dimension)
@@ -84,10 +85,9 @@ def q_learning():
             print(f"Outside temp: {outside_temp}")
             print(f"Actions: {actions}")
             next_state, next_curr_temps, reward = env.step(actions, outside_temp, energy_cost, current_temps, target_temps)
-            rewards.append(reward)
             log_probs.append(log_prob)
 
-            epsilon = epsilon * 0.9
+            epsilon = epsilon * 0.99
             ep_loss += calculate_loss(reward, log_prob)
 
             current_temps = next_curr_temps
@@ -97,6 +97,7 @@ def q_learning():
             print(f"Next state: {state}")
             print(f"Updated current temps after action: {current_temps}")
             print(f"Reward: {reward}")
+            print(f"Step loss: {calculate_loss(reward, log_prob)}")
 
         
         print(f"Episode reward: {episode_reward}")
@@ -110,26 +111,39 @@ def q_learning():
         all_rewards.append(episode_reward)
         all_losses.append(ep_loss.item())
 
-        # Plot the training loss after every episode
-        plt.plot(all_losses, label='Training Loss')
-        plt.xlabel('Episode')
-        plt.ylabel('Loss')
-        plt.title('Training Loss Over Episodes')
-        plt.legend()
-        plt.show()
+        # # Plot the training loss after every episode
+        # plt.plot(all_losses, label='Training Loss')
+        # plt.xlabel('Episode')
+        # plt.ylabel('Loss')
+        # plt.title('Training Loss Over Episodes')
+        # plt.legend()
+        # plt.show()
 
-        # Plot the rewards after every episode
-        plt.plot(all_rewards, label='Training Loss')
-        plt.xlabel('Episode')
-        plt.ylabel('Reward')
-        plt.title('Rewards Over Episodes')
-        plt.legend()
-        plt.show()
+        # # Plot the rewards after every episode
+        # plt.plot(all_rewards, label='Training Loss')
+        # plt.xlabel('Episode')
+        # plt.ylabel('Reward')
+        # plt.title('Rewards Over Episodes')
+        # plt.legend()
+        # plt.show()
     print('Finished Training')
     print("All rewards", all_rewards)
     print("All losses", all_losses)
+    return all_rewards, all_losses
 
 
 
-q_learning()
+rewards, losses = q_learning()
+plt.plot(rewards, label='Rewards')
+plt.xlabel('Episode')
+plt.ylabel('Reward')
+plt.title('Rewards Over Episodes')
+plt.legend()
+plt.show()
 
+plt.plot(losses, label='Loss')
+plt.xlabel('Episode')
+plt.ylabel('Loss')
+plt.title('Loss Over Episodes')
+plt.legend()
+plt.show()
