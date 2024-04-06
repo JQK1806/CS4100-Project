@@ -44,6 +44,14 @@ max_steps_per_ep = 24
 num_episodes = 1000
 energy_cost = 5.0
 
+def generate_target_temps(num_episodes):
+    target_temps_all_episodes = np.random.randint(60, 81, size=(num_episodes, 9))
+    return target_temps_all_episodes
+
+def generate_outside_temperatures(num_episodes):
+    return np.random.randint(60, 81, size=(num_episodes, 24))
+target_temps_for_all_episodes = generate_target_temps(num_episodes)
+outside_temps_for_all_episodes = generate_outside_temperatures(num_episodes)
 
 def training():
     all_temp_diffs = []
@@ -56,8 +64,8 @@ def training():
         state = env.reset()
         episode_reward = 0.0
         # generate target temps
-        target_temps = np.random.randint(60, 81, size=9)
-        outside_temps = generate_outside_temperatures()
+        target_temps = target_temps_for_all_episodes[episode]
+        outside_temps = outside_temps_for_all_episodes[episode]
         outside_temp = outside_temps[0]
         current_temps = np.full(9, outside_temp)
         # set all current temps to be the ouside temp
@@ -140,16 +148,62 @@ def training():
     return all_rewards, all_losses, all_temp_diffs, all_actions
 
 rewards, losses, all_temp_diffs, all_actions = training()
-plt.plot(rewards, label='Rewards')
+plt.figure()
+plt.plot(rewards, label='Rewards', color='#396336')
 plt.xlabel('Episode')
 plt.ylabel('Reward')
-plt.title('Rewards Over Episodes')
+plt.title('Rewards Over Episodes For Our Model')
 plt.legend()
-plt.show()
+plt.savefig('model_rewards_plot.png')  # Save the plot as a PNG image
+plt.close()
 
-plt.plot(losses, label='Loss')
+plt.figure()
+plt.plot(losses, label='Loss', color='#396336')
 plt.xlabel('Episode')
 plt.ylabel('Loss')
-plt.title('Loss Over Episodes')
+plt.title('Loss Over Episodes For Our Model')
 plt.legend()
-plt.show()
+plt.savefig('loss_plot.png')  # Save the plot as a PNG image
+plt.close()
+
+
+def random_model():
+    all_rewards = []
+    for episode in range(num_episodes):
+        state = env.reset()
+        episode_reward = 0.0
+        # generate target temps
+        target_temps = target_temps_for_all_episodes[episode]
+        outside_temps = outside_temps_for_all_episodes[episode]
+        outside_temp = outside_temps[0]
+        current_temps = np.full(9, outside_temp)
+        # set all current temps to be the ouside temp
+        for hour in range (max_steps_per_ep):
+            if hour >= 24: 
+                hour = hour % 24 
+            outside_temp = outside_temps[hour]
+            temp_differences = target_temps - current_temps
+            all_temp_diffs.append(temp_differences)
+            actions = torch.randint(0, 4, (9,), dtype=torch.long)  # Generate random actions for 9 zones
+            next_state, next_curr_temps, reward = env.step(actions, outside_temp, energy_cost, current_temps, target_temps)
+            current_temps = next_curr_temps
+            temp_differences = target_temps - current_temps
+            episode_reward += reward
+            state = next_state
+        all_rewards.append(episode_reward)
+    print('Finished Training')
+    print("All rewards", all_rewards)
+    # print("Last reward", all_rewards[999])
+    # print("Last loss", all_losses[999])
+    return all_rewards
+
+random_rewards = random_model()
+plt.figure()
+plt.plot(random_rewards, label='Random Rewards', color='#396336')
+plt.xlabel('Episode')
+plt.ylabel('Reward')
+plt.title('Rewards Over Episodes for Random Choices')
+plt.legend()
+plt.savefig('random_model_rewards_plot.png')  # Save the plot as a PNG image
+plt.close()
+
