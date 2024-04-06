@@ -154,6 +154,7 @@ plt.xlabel('Episode')
 plt.ylabel('Reward')
 plt.title('Rewards Over Episodes For Our Model')
 plt.legend()
+plt.tight_layout()  # Adjust plot to prevent labels from being cut off
 plt.savefig('model_rewards_plot.png')  # Save the plot as a PNG image
 plt.close()
 
@@ -163,6 +164,7 @@ plt.xlabel('Episode')
 plt.ylabel('Loss')
 plt.title('Loss Over Episodes For Our Model')
 plt.legend()
+plt.tight_layout()  # Adjust plot to prevent labels from being cut off
 plt.savefig('loss_plot.png')  # Save the plot as a PNG image
 plt.close()
 
@@ -204,6 +206,7 @@ plt.xlabel('Episode')
 plt.ylabel('Reward')
 plt.title('Rewards Over Episodes for Random Choices')
 plt.legend()
+plt.tight_layout()  # Adjust plot to prevent labels from being cut off
 plt.savefig('random_model_rewards_plot.png')  # Save the plot as a PNG image
 plt.close()
 
