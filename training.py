@@ -38,10 +38,16 @@ def concatenate_inputs(state, temp_differences):
     concatenated_input = torch.cat((state_tensor, temp_differences_tensor), dim=0)  # Concatenate along the columns (second dimension)
     return concatenated_input
 
+
+
 max_steps_per_ep = 24
-num_episodes = 100
+num_episodes = 1000
 energy_cost = 5.0
-def q_learning():
+
+
+def training():
+    all_temp_diffs = []
+    all_actions = []
     epsilon = .99
     all_rewards = []
     all_losses = []
@@ -54,13 +60,14 @@ def q_learning():
         outside_temps = generate_outside_temperatures()
         outside_temp = outside_temps[0]
         current_temps = np.full(9, outside_temp)
-
         # set all current temps to be the ouside temp
         for hour in range (max_steps_per_ep):
             if hour >= 24: 
                 hour = hour % 24 
             outside_temp = outside_temps[hour]
             temp_differences = target_temps - current_temps
+            all_temp_diffs.append(temp_differences)
+
             curr_concatenated_input = concatenate_inputs(state, temp_differences)  # Concatenate along the columns (second dimension)
             if np.random.random() < epsilon: #epsilon greedy
                 actions = torch.randint(0, 4, (9,), dtype=torch.long)  # Generate random actions for 9 zones
@@ -69,6 +76,7 @@ def q_learning():
             else:
                 actions, probabilities = net(curr_concatenated_input)
                 log_probs = torch.log(probabilities)  # Log probability of the action taken
+                # print(f"Probabilities: {probabilities}")
             # add temp diff to input param
             # get differences
             # pass as input to the neural network with the occupancies
@@ -76,28 +84,28 @@ def q_learning():
             # pass actions to environment
             # get rewards
             # and new state
-            print(f"Hour: {hour}")
-            print(f"State: {state}")
-            print(f"Current temps: {current_temps}")
-            print(f"Target temps: {target_temps}")
-            print(f"Outside temp: {outside_temp}")
-            print(f"Actions: {actions}")
+            # print(f"Hour: {hour}")
+            # print(f"State: {state}")
+            # print(f"Current temps: {current_temps}")
+            # print(f"Target temps: {target_temps}")
+            # print(f"Outside temp: {outside_temp}")
+            # print(f"Actions: {actions}")
             next_state, next_curr_temps, reward = env.step(actions, outside_temp, energy_cost, current_temps, target_temps)
 
-            epsilon = epsilon * 0.99
+            epsilon = epsilon * 0.995
             ep_loss += calculate_loss(reward, log_probs)
 
             current_temps = next_curr_temps
             temp_differences = target_temps - current_temps
             episode_reward += reward
             state = next_state
-            print(f"Next state: {state}")
-            print(f"Updated current temps after action: {current_temps}")
+            # print(f"Next state: {state}")
+            # print(f"Updated current temps after action: {current_temps}")
             print(f"Reward: {reward}")
-            print(f"Step loss: {calculate_loss(reward, log_probs)}")
+            # print(f"Step loss: {calculate_loss(reward, log_probs)}")
 
         
-        print(f"Episode reward: {episode_reward}")
+        # print(f"Episode reward: {episode_reward}")
         print(f"Training loss: {ep_loss.item()}")
 
          # Perform the gradient computation and optimization
@@ -107,6 +115,7 @@ def q_learning():
 
         all_rewards.append(episode_reward)
         all_losses.append(ep_loss.item())
+        all_actions.append(actions.numpy())
 
         # # Plot the training loss after every episode
         # plt.plot(all_losses, label='Training Loss')
@@ -126,11 +135,11 @@ def q_learning():
     print('Finished Training')
     print("All rewards", all_rewards)
     print("All losses", all_losses)
-    return all_rewards, all_losses
+    # print("Last reward", all_rewards[999])
+    # print("Last loss", all_losses[999])
+    return all_rewards, all_losses, all_temp_diffs, all_actions
 
-
-
-rewards, losses = q_learning()
+rewards, losses, all_temp_diffs, all_actions = training()
 plt.plot(rewards, label='Rewards')
 plt.xlabel('Episode')
 plt.ylabel('Reward')
