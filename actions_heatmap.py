@@ -22,7 +22,7 @@ colors = plt.cm.coolwarm(norm(range(len(action_labels))))
 
 def update(frame):
     cax.set_data(actions_array[frame]) 
-    ax.set_title(f'Actions (Episode: {frame})')
+    ax.set_title(f'Actions (Step: {frame})')
     return cax,
 
 ani = FuncAnimation(fig, update, frames=range(time_steps), blit=False, interval=200)

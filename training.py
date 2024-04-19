@@ -1,3 +1,5 @@
+from matplotlib.animation import FuncAnimation
+from matplotlib.colors import Normalize
 import torch
 import torch.nn.functional as F
 import torch.nn as nn
@@ -188,4 +190,56 @@ plt.legend()
 plt.tight_layout()  # Adjust plot to prevent labels from being cut off
 plt.savefig('random_model_rewards_plot.png')  # Save the plot as a PNG image
 plt.close()
+
+
+
+time_steps_temp = len(all_temp_diffs)
+grid_y_temp = 3
+grid_x_temp = 3
+
+temp_diffs = np.array(all_temp_diffs).reshape(time_steps_temp, grid_y_temp, grid_x_temp)
+
+fig, axs = plt.subplots(1, 2, figsize=(12, 6)) 
+fig.subplots_adjust(wspace=0.5)
+
+# Temperature subplot
+cax_temp = axs[0].matshow(temp_diffs[0], cmap='coolwarm')
+fig.colorbar(cax_temp, ax=axs[0])
+
+def update_temp(frame):
+    cax_temp.set_data(temp_diffs[frame])
+    axs[0].set_title(f'Temperature Difference (Step: {frame})')
+    return cax_temp,
+
+ani_temp = FuncAnimation(fig, update_temp, frames=range(time_steps_temp), blit=False, interval=200)
+
+# Actions subplot
+time_steps_actions = len(all_actions)
+grid_y_actions = 3
+grid_x_actions = 3
+
+actions_array = np.array(all_actions).reshape(time_steps_actions, grid_y_actions, grid_x_actions)
+
+cax_actions = axs[1].matshow(actions_array[0], cmap='coolwarm')
+
+action_labels = ['Off', 'Low', 'Medium', 'High']
+norm = Normalize(vmin=0, vmax=len(action_labels)-1)
+
+colors = plt.cm.coolwarm(norm(range(len(action_labels))))
+
+def update_actions(frame):
+    cax_actions.set_data(actions_array[frame])
+    axs[1].set_title(f'Actions (Step: {frame})')
+    return cax_actions,
+
+ani_actions = FuncAnimation(fig, update_actions, frames=range(time_steps_actions), blit=False, interval=200)
+
+# Legend for actions subplot
+legend = axs[1].legend(handles=[plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=colors[i], markersize=10) for i in range(len(action_labels))],
+                       labels=action_labels,
+                       loc='center left',
+                       bbox_to_anchor=(1, 0.5))
+
+plt.show()
+
 

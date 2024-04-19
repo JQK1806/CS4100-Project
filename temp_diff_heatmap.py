@@ -15,9 +15,11 @@ fig.colorbar(cax)
 
 def update(frame):
     cax.set_data(temp_diffs[frame])
-    ax.set_title(f'Temperature Difference (Episode: {frame})')
+    ax.set_title(f'Temperature Difference (Step: {frame})')
     return cax,
 
 ani = FuncAnimation(fig, update, frames=range(time_steps), blit=False, interval=200)
 
 plt.show()
+
+
