@@ -17,39 +17,32 @@ class SmartHomeEnv(gym.Env):
         self.state = np.zeros(self.num_zones, dtype=int)  # Reset all zones to unoccupied - 0
         return self.state
 
+    
     def step(self, actions, outside_temp, energy_cost, current_temps, target_temps):
-        print(f"Actions: {actions}")
-        print(f"Outside temp: {outside_temp}")
-        print(f"Energy cost: {energy_cost}")
-        print(f"Current temps: {current_temps}")
-        print(f"Target temps: {target_temps}")
-
+        # convert actions to np array
         actions = actions.numpy()
-        # ppl move around, current temp of each zone should be updated
         action_temp_penalty = {0:0, 1:-4, 2: -8, 3:-12}
         reward = 0
-        for i, action in enumerate(actions):
-            # print(f"Zone: {i}, Action: {action}")
-            # print(f"Current Temp: {current_temps[i]}")
-            # print(f"Target Temp: {target_temps[i]}")
-            # print(f"Outside Temp: {outside_temp}")
-            # print("Natural temp change:",  0.2 * (outside_temp - current_temps[i]))
-            nat_temp_change = 0.2 * (outside_temp - current_temps[i])
 
+        # Update temperatures for all zones at each step based on actions and natural temp change
+        for i, action in enumerate(actions):
+            nat_temp_change = 0.2 * (outside_temp - current_temps[i])
             if target_temps[i] > current_temps[i]:
                  action_temp_change = -action_temp_penalty[action]
             else:
                 action_temp_change = action_temp_penalty[action]
             current_temps[i] = current_temps[i] + nat_temp_change + action_temp_change
-            # print(f"New Temp: {current_temps[i]}")
+            
+            # Calculate reward components
             temp_diff = current_temps[i] - target_temps[i]
             action_reward = action * -energy_cost
             temp_reward = -20 * (abs(temp_diff) - (self.state[i]-1)) # take into account occupancy
-            # print(f"Reward: {action_reward + temp_reward}")
+            
+            # Accumulate total reward
             reward = action_reward + temp_reward + reward
 
 
-
+        # Randomly update the state of each zone to simulate people moving around
         self.state = np.random.randint(2, size=self.num_zones)
 
         return self.state, current_temps, reward
