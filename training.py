@@ -13,21 +13,15 @@ env = SmartHomeEnv()
 # Create an instance of the neural network
 net = CombinedNetwork()
 
-'''PART 4:
-Choose a good loss function and optimizer
-'''
 
 criterion = nn.MSELoss() 
 optimizer = torch.optim.Adam(net.parameters(), lr=0.01)
 
-'''
-PART 5:
-Train your model!
-'''
-
 
 def calculate_loss(reward, log_probs):
     loss = 0
+    
+    # Calculate loss as the sum of log probabilities weighted by rewards
     for log_prob in log_probs:
         loss += log_prob * reward  # Use the reward for each step
     return loss
@@ -38,20 +32,24 @@ def concatenate_inputs(state, temp_differences):
     concatenated_input = torch.cat((state_tensor, temp_differences_tensor), dim=0)  # Concatenate along the columns (second dimension)
     return concatenated_input
 
-
-
+# Set parameters for training
 max_steps_per_ep = 24
 num_episodes = 1000
 energy_cost = 5.0
 
+
 def generate_target_temps(num_episodes):
+    # Generate random target temps for each zone to simulate varying user preferences
     target_temps_all_episodes = np.random.randint(60, 81, size=(num_episodes, 9))
     return target_temps_all_episodes
 
 def generate_outside_temperatures(num_episodes):
     return np.random.randint(60, 81, size=(num_episodes, 24))
+
+
 target_temps_for_all_episodes = generate_target_temps(num_episodes)
 outside_temps_for_all_episodes = generate_outside_temperatures(num_episodes)
+
 
 def training():
     all_temp_diffs = []
@@ -59,64 +57,57 @@ def training():
     epsilon = .99
     all_rewards = []
     all_losses = []
+    
     for episode in range(num_episodes):
         ep_loss = 0.0
         state = env.reset()
         episode_reward = 0.0
-        # generate target temps
+        
+        # Generate target temps, outside temps
         target_temps = target_temps_for_all_episodes[episode]
         outside_temps = outside_temps_for_all_episodes[episode]
         outside_temp = outside_temps[0]
         current_temps = np.full(9, outside_temp)
-        # set all current temps to be the ouside temp
+        
+        # Simulating each hour within an episode
         for hour in range (max_steps_per_ep):
             if hour >= 24: 
                 hour = hour % 24 
             outside_temp = outside_temps[hour]
             temp_differences = target_temps - current_temps
             all_temp_diffs.append(temp_differences)
-
             curr_concatenated_input = concatenate_inputs(state, temp_differences)  # Concatenate along the columns (second dimension)
-            if np.random.random() < epsilon: #epsilon greedy
+            
+            if np.random.random() < epsilon: #Epsilon greedy strategy
                 actions = torch.randint(0, 4, (9,), dtype=torch.long)  # Generate random actions for 9 zones
                 prob_action = torch.full((9,), 0.25)  # Each action has a probability of 0.25
                 log_probs = torch.log(prob_action)  # Log probability of each action
             else:
                 actions, probabilities = net(curr_concatenated_input)
                 log_probs = torch.log(probabilities)  # Log probability of the action taken
-                # print(f"Probabilities: {probabilities}")
-            # add temp diff to input param
-            # get differences
-            # pass as input to the neural network with the occupancies
-            # get actions
-            # pass actions to environment
-            # get rewards
-            # and new state
-            # print(f"Hour: {hour}")
-            # print(f"State: {state}")
-            # print(f"Current temps: {current_temps}")
-            # print(f"Target temps: {target_temps}")
-            # print(f"Outside temp: {outside_temp}")
-            # print(f"Actions: {actions}")
+                
             next_state, next_curr_temps, reward = env.step(actions, outside_temp, energy_cost, current_temps, target_temps)
 
+            # Decay epsilon value for epsilon-greedy exploration
             epsilon = epsilon * 0.995
+
+            # Calculate episode loss
             ep_loss += calculate_loss(reward, log_probs)
 
+            # Update current temps and calculate temp differences
             current_temps = next_curr_temps
             temp_differences = target_temps - current_temps
+            
+            # Accumulate episode reward
             episode_reward += reward
+            
+            # Update current state
             state = next_state
-            # print(f"Next state: {state}")
-            # print(f"Updated current temps after action: {current_temps}")
             print(f"Reward: {reward}")
-            # print(f"Step loss: {calculate_loss(reward, log_probs)}")
 
-        
-        # print(f"Episode reward: {episode_reward}")
         print(f"Training loss: {ep_loss.item()}")
 
-         # Perform the gradient computation and optimization
+        # Perform gradient computation and optimization
         optimizer.zero_grad()  # Reset gradients
         ep_loss.backward()  # Compute gradients
         optimizer.step()  # Update weights
@@ -125,29 +116,15 @@ def training():
         all_losses.append(ep_loss.item())
         all_actions.append(actions.numpy())
 
-        # # Plot the training loss after every episode
-        # plt.plot(all_losses, label='Training Loss')
-        # plt.xlabel('Episode')
-        # plt.ylabel('Loss')
-        # plt.title('Training Loss Over Episodes')
-        # plt.legend()
-        # plt.show()
-
-        # # Plot the rewards after every episode
-        # plt.plot(all_rewards, label='Training Loss')
-        # plt.xlabel('Episode')
-        # plt.ylabel('Reward')
-        # plt.title('Rewards Over Episodes')
-        # plt.legend()
-        # plt.show()
     print('Finished Training')
     print("All rewards", all_rewards)
     print("All losses", all_losses)
-    # print("Last reward", all_rewards[999])
-    # print("Last loss", all_losses[999])
     return all_rewards, all_losses, all_temp_diffs, all_actions
 
+# Run training
 rewards, losses, all_temp_diffs, all_actions = training()
+
+# Plot rewards
 plt.figure()
 plt.plot(rewards, label='Rewards', color='#396336')
 plt.xlabel('Episode')
@@ -158,6 +135,7 @@ plt.tight_layout()  # Adjust plot to prevent labels from being cut off
 plt.savefig('model_rewards_plot.png')  # Save the plot as a PNG image
 plt.close()
 
+# Plot losses
 plt.figure()
 plt.plot(losses, label='Loss', color='#396336')
 plt.xlabel('Episode')
@@ -169,6 +147,7 @@ plt.savefig('loss_plot.png')  # Save the plot as a PNG image
 plt.close()
 
 
+# Function to run random model for comparison
 def random_model():
     all_rewards = []
     for episode in range(num_episodes):
