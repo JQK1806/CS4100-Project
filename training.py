@@ -16,7 +16,6 @@ env = SmartHomeEnv()
 net = CombinedNetwork()
 
 
-criterion = nn.MSELoss() 
 optimizer = torch.optim.Adam(net.parameters(), lr=0.01)
 
 
@@ -29,6 +28,7 @@ def calculate_loss(reward, log_probs):
     return loss
 
 def concatenate_inputs(state, temp_differences):
+    # used Chat GPT
     state_tensor = torch.tensor(state, dtype=torch.float32).reshape(1, -1)  # Reshape next_state to a row vector
     temp_differences_tensor = torch.tensor(temp_differences, dtype=torch.float32).reshape(1, -1)  # Reshape temp_differences to a row vector
     concatenated_input = torch.cat((state_tensor, temp_differences_tensor), dim=0)  # Concatenate along the columns (second dimension)
@@ -227,6 +227,7 @@ norm = Normalize(vmin=0, vmax=len(action_labels)-1)
 
 colors = plt.cm.coolwarm(norm(range(len(action_labels))))
 
+ # used Chat GPT
 def update_actions(frame):
     cax_actions.set_data(actions_array[frame])
     axs[1].set_title(f'Actions (Step: {frame})')

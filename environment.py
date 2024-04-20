@@ -7,6 +7,8 @@ class SmartHomeEnv(gym.Env):
     def __init__(self):
         super(SmartHomeEnv, self).__init__()
         self.num_zones = 9
+
+        # used Chat GPT
         self.observation_space = spaces.Discrete(2 ** self.num_zones)  # Number of possible states, 2^9 - 0=empty, 1=occupied
         self.action_space = spaces.MultiDiscrete([4] * self.num_zones)  # Each zone has 4 possible actions:0,1,2,3
         #self.states = list(itertools.product([0, 1], repeat=self.num_zones))  # All possible states, (zone #, occupancy)
@@ -43,6 +45,7 @@ class SmartHomeEnv(gym.Env):
 
 
         # Randomly update the state of each zone to simulate people moving around
+        # used Chat GPT
         self.state = np.random.randint(2, size=self.num_zones)
 
         return self.state, current_temps, reward
